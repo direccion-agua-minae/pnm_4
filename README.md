@@ -1,2 +1,1 @@
-# prueba
-PRUEBA
+Página principal
