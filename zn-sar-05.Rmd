@@ -1,0 +1,370 @@
+---
+title: "MONITOREO DE LA CALIDAD DEL AGUA SUPERFICIAL (ETAPA I) DE COSTA RICA"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    social: menu
+    vertical_layout: scroll    
+---
+
+```{r setup, include=FALSE}
+
+#-------------------- Paquetes --------------------
+
+library(flexdashboard)
+library(plotly)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(leaflet)
+library(rgdal)
+library(knitr)
+library(magrittr)
+library(kableExtra)
+
+
+
+
+#-------------------- Colores ---------------------
+
+color_camp_1 <- 'blue1'
+color_camp_2 <- 'blue'
+color_camp_3 <- 'blue'
+color_camp_4 <- 'blue'
+
+color_info <- '#7fab5e'
+color_ubic <- '#9fbe88'
+
+
+#--------------------- Íconos ---------------------
+
+
+icono_info1 <- 'fas fa-'
+icono_info2 <- 'fas fa-'
+
+#--------------- Otros parámetros -----------------
+
+# Separador para lectura de datos CSV
+caracter_separador <- ','
+```
+
+
+```{r, include=FALSE}
+#--------------- Archivos de datos ----------------
+
+archivo_datos_PNM <- read.csv('https://raw.githubusercontent.com/direccion-agua-minae/pnm_4/main/2021_08_09_PNM_INFO_F4.csv', sep = ";")
+
+#la tabla convertirla en un shape, en QGIS de csv a shp y la agregarla directamenete y le doy la proyección
+PNM <- st_read("C:/Users/usuario/Documents/ESMERALDA/Año 2021/PNMI/PUBLICACION_DATOS_PNM/ARCHIVOS_INFORMACION_PUBLICADA/PNM_WGS84_2.shp") %>%
+  st_transform(4326) %>%
+  st_make_valid()
+
+#Cuencas para mostrar en el mapa
+cuencas <- st_read("C:/Users/usuario/Documents/ESMERALDA/Año 2021/PNMI/PUBLICACION_DATOS_PNM/ARCHIVOS_INFORMACION_PUBLICADA/Cuencas hidrograficas/CUencas hidrograficas.shp")%>%
+  st_transform(4326) %>%
+  st_make_valid()
+
+names(archivo_datos_PNM)[1] <- "nombre" #cambia el nombre de la columna cuencas para que coincida con la del shp de cuencas
+
+#buscar y reemplazar para que coincidan los nombres entre ambas bases 
+archivo_datos_PNM$nombre <- gsub("Baru", "Barú", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Chirripo", "Chirripó", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Curen/a", "Cureña", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Frio", "Río Frío", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Grande de Terraba", "Térraba", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Jesus Maria", "Jesús María", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Moin", "Moín", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Peninsula de Nicoya", "Península de Nicoya", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Peninsula de Osa", "Península de Osa", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Reventazon", "Reventazón", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Sarapiqui", "Sarapiquí", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Tarcoles", "Tárcoles", archivo_datos_PNM$nombre)
+archivo_datos_PNM$nombre <- gsub("Estrella", "La Estrella", archivo_datos_PNM$nombre)
+
+#interseca los puntos con el shape para mezclar la información
+sf_datos <- inner_join(cuencas, archivo_datos_PNM,  by = "nombre")
+
+```
+
+
+**RESUMEN**
+=======================================================================
+Row {data-height=10}
+-----------------------------------------------------------------------
+### **Última actualización de datos realizada el 25 de febrero de 2021 con base en los [datos publicados por la Dirección de de Agua del Ministerio de Ambiente y Energía de Costa Rica](http://mapas.da.go.cr/mapnew.php)**.
+
+
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+<br>
+<br>
+[![Dirección de Agua](C:/Users/usuario/Documents/ESMERALDA/Año 2021/PNMI/PUBLICACION_DATOS_PNM/ARCHIVOS_INFORMACION_PUBLICADA/da-logo230x.png)](http://www.da.go.cr)
+
+[![MINAE](C:/Users/usuario/Documents/ESMERALDA/Año 2021/PNMI/PUBLICACION_DATOS_PNM/ARCHIVOS_INFORMACION_PUBLICADA/Logo MINAE 2020_230x.jpg)](https://minae.go.cr/)
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+**Elaboración:**
+
+Esmeralda Vargas Madrigal
+
+
+
+**Colaboración:**
+
+Kevin Chavarría Esquivel
+
+Manuel Vargas del Valle
+
+
+Row {data-height=130}
+-----------------------------------------------------------------------
+### código del punto muestreado {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,3])),
+         caption = "Código del sitio de muestreo",
+         icon = icono_info1, 
+         color = color_info
+         )
+```
+
+### Cuerpo de Agua {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,2])),
+         caption = "Cuerpo de Agua",
+         color = color_info
+         )
+```
+
+### Cuenca {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,1])), 
+         caption = "Cuenca",
+         color = color_info
+)
+```
+
+### Coordenadas {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,12])), 
+         caption = "Longitud (Coordenadas CRTM 05)",
+         icon = icono_info2, 
+         color = color_info
+)
+```
+
+### Coordenadas {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,13])), 
+         caption = "Latitud (Coordenadas CRTM 05)",
+         icon = icono_info2, 
+         color = color_info
+)
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Provincia {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,15])), 
+         caption = "Provincia",
+         color = color_ubic
+)
+```
+
+### Cantón {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,16])), 
+         caption = "Cantón",
+         color = color_ubic
+)
+```
+
+### Distrito {.value-box}
+```{r}
+valueBox(value = paste(format(archivo_datos_PNM[113,17])), 
+         caption = "Distrito",
+         color = color_ubic
+)
+```
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+### **Resumen de resultados de los índices de la calidad del  agua superficial**
+
+```{r}
+knitr::kable(
+  archivo_datos_PNM[113:116, 18:24], bootstrap_options = "basic", 
+  align = c("l","c","l","c","c","c","c"),
+  col.names = c("Mes", "Año", "Régimen de Lluvia", "Indice Holandes (IH)", "Interpretación IH", "Indice Biológico (BMWP-CR)", "Interpretación BMWP-CR"),
+  caption = '**Se utilizó el Índice Holandes (IH) y el Índice Biológico (BMWP-CR), según el Decreto Ejecutivo N°33903-MINAE-S**') %>%
+  kable_classic(
+  full_width = TRUE,
+  c("hover"),
+  font_size=16,
+  html_font = "Cambria") %>%
+  row_spec(0, color = "white", background = "#aab984" 
+) %>%
+  row_spec(1:4, background = "#e0e8cc" 
+)
+```
+
+
+Row {data-width=400}
+-----------------------------------------------------------------------
+
+### **Mapa de ubicación del punto de muestreo**
+```{r}
+
+leaflet(data = PNM[151:151,]) %>%
+  addTiles() %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Stamen Toner Lite") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imágenes de ESRI") %>% 
+  addMarkers(~LONG, ~LAT, 
+             popup= paste(
+               "Sitio de muestreo: ", PNM$Codigo[151]
+  )) %>%  
+  addLayersControl(
+    baseGroups = c("Imágenes de ESRI", "OpenStreetMap", "Stamen Toner Lite")
+  )
+
+# Despliegue del mapa
+
+```
+
+
+### **Información de los datos publicados**
+
+<br>
+
+**1. El monitoreo de los cuerpos de agua superficiales y la clasificación de su calidad se realizó según:**
+
+- Decreto N° 33903-MINAE-S. REGLAMENTO PARA LA EVALUACIÓN Y CLASIFICACION DE LA CALIDAD DE CUERPOS DE AGUA SUPERFICIALES.
+
+- Plan nacional de monitoreo de la calidad de los cuerpos de agua superficiales.
+
+- Programa nacional de monitoreo de la calidad de los cuerpos de agua del país.
+<br>
+<br>
+<br>
+
+**2. Para una mejor interpretación de los resultados, se aclara:**
+
+Según el artículo 20 del Decreto N° 33903-MINAE-S, en aquellos casos en que el valor del Índice de Clasificación Holandés y el valor del Índice Biológico presenten una diferencia de más de una clase entre ellos, el
+muestreo se deberá repetir por una vez, en un período no mayor a 30 días naturales. En caso de que se mantenga la diferencia de clases se clasifica en la de menor calidad.
+<br>
+<br>
+<br>
+
+Row {data-height=120}
+-----------------------------------------------------------------------
+### **Notas:** 
+
+```{r}
+NOTAS = data.frame(Notas = c("1.", "2."),
+  Contenido = c(
+    "En los casos donde el resultado se reporta comio N/A, es debido a que no se tienen resultados del Índice por la imposibilidad de tomar la muestra, ya sea por el acceso al sitio de muestreo o porque no discurría agua por el cauce del cuerpo de agua.", 
+    "Para mayor información sobre el monitoreo de la calidad de los cuerpos de agua superficiales, escríbanos al correo: daguas@da.go.cr"
+  )
+)
+
+kable((NOTAS),
+  col.names = NULL,
+  align = c("r","l")
+  ) %>%
+  kable_paper( #estilo de la tabla
+  full_width = TRUE) %>%
+  column_spec(1:2, background = "#e5f0f6")
+
+```
+
+**CONSULTA DE DATOS**
+=======================================================================
+Row {data-height=30}
+-----------------------------------------------------------------------
+#### **CONSULTA DE DATOS DEL MONITOREO EN COSTA RICA (2015-2020)**
+
+Column {data-height=750}
+-----------------------------------------------------------------------
+
+### **Datos del monitoreo entre los años 2015 al 2020**
+
+```{r}
+sf_datos %>%
+  st_drop_geometry() %>%
+  select(Cuenca = nombre, Código = Codigo, "Cuerpo de agua" = Cuerpo.de.Agua, Provincia = Provincia, Cantón = Canton, Distrito = Distrito) %>%
+  DT::datatable(rownames = FALSE,
+                options = list(searchHighlight = TRUE, 
+                               language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+                ))
+```
+
+
+
+### **Distribución espacial de registros**
+
+```{r}
+leaflet() %>%
+  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group = "Open StreeT Map") %>%
+  addTiles(urlTemplate ="https://mts1.google.com/vt/lyrs=s&hl=en&src=app&x={x}&y={y}&z={z}&s=G", attribution = 'Google', group = "Google Maps") %>%
+  addMarkers(data= PNM, group = "PNM",
+             popup = paste(
+               "Sitio de muestreo: ", PNM$Sitio.de.M, "<br>",
+               "Código: ", PNM$Codigo, "<br>",
+               "Cuerpo de agua: ", PNM$Cuerpo.de, "<br>",
+               "Cuenca: ", PNM$Cuenca, "<br>",
+               "Fase de implementación: ", PNM$Fase, "<br>",
+               "Año de muestreo inicial: ", PNM$An.O.INICI, "<br>",
+               "Año de muestreo final: ", PNM$An.O.FINAL, "<br>",
+               "Provincia: ", PNM$Provincia, "<br>",
+               "Cantón: ", PNM$Canton, "<br>",
+               "Distrito: ", PNM$Distrito, "<br>",
+               "Estado Actual: ", PNM$ESTADO.AC, "<br>")) %>%
+  addPolygons(
+    data = sf_datos,
+    stroke=T, fillOpacity = 0,
+    color="red", weight=0.8, opacity= 2.0,
+    group = "Cuencas",
+    popup = paste(
+      "Cuenca: ", sf_datos$nombre, "<br>",
+      "Provincia: ", sf_datos$Provincia, "<br>",
+      "Cantón: ", sf_datos$Canton, "<br>",
+      "Distrito: ", sf_datos$Distrito, "<br>")) %>%
+  addLayersControl(baseGroups = c("Google Maps", "OpenStreetMap"),
+                   overlayGroups = c("PNM", "Cuencas"),
+                   options = layersControlOptions(collapsed = TRUE))  %>%
+  addScaleBar()  %>%
+  hideGroup(c("Cuencas")) %>%
+  addMiniMap(
+    toggleDisplay = TRUE,
+    position = "bottomleft",
+    tiles = providers$OpenStreetMap.Mapnik)
+```
+
